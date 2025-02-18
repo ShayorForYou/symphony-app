@@ -79,7 +79,8 @@ class _WebState extends State<Web> {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Theme.of(context)
+                color: Theme
+                    .of(context)
                     .colorScheme
                     .errorContainer
                     .withValues(alpha: 0.2),
@@ -88,7 +89,10 @@ class _WebState extends State<Web> {
               child: Icon(
                 Icons.wifi_off_rounded,
                 size: 50,
-                color: Theme.of(context).colorScheme.error,
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .error,
               ),
             ),
             const SizedBox(height: 24),
@@ -97,7 +101,10 @@ class _WebState extends State<Web> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.error,
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .error,
               ),
             ),
             const SizedBox(height: 12),
@@ -106,7 +113,8 @@ class _WebState extends State<Web> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: Theme.of(context)
+                color: Theme
+                    .of(context)
                     .colorScheme
                     .onSurface
                     .withValues(alpha: 0.7),
@@ -115,21 +123,15 @@ class _WebState extends State<Web> {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: _refreshPage,
-              icon: const Icon(
+              icon:  Icon(
                 Icons.refresh_rounded,
-                color: Colors.white,
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .secondary,
               ),
               label: const Text('Try Again'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+
             ),
           ],
         ),
@@ -156,13 +158,17 @@ class _WebState extends State<Web> {
         ],
       ),
       body: _isLoading
-          ?  Center(
+          ? Center(
         child: SizedBox(
           width: 100,
           height: 100,
           child: LoadingIndicator(
             indicatorType: Indicator.ballClipRotateMultiple,
-            colors: [Theme.of(context).colorScheme.primary],
+            colors: [Theme
+                .of(context)
+                .colorScheme
+                .primary
+            ],
           ),
         ),
       )

@@ -23,7 +23,7 @@ class ServiceCenterState extends State<ServiceCenter> {
   Position? _currentPosition;
   PolylinePoints polylinePoints = PolylinePoints();
   final DraggableScrollableController _sheetController =
-  DraggableScrollableController();
+      DraggableScrollableController();
 
   final Set<Marker> _markers = {};
   static const CameraPosition _initialPosition = CameraPosition(
@@ -31,21 +31,26 @@ class ServiceCenterState extends State<ServiceCenter> {
     zoom: 12,
   );
 
-  // Cache service center items
   late final List<Widget> _serviceItems;
+  bool _isMapReady = false;
+  bool _isLoadingLocation = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeMarkers();
-    _checkLocationPermission();
     _serviceItems = _buildServiceItems();
+    _initializeMarkers();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _checkLocationPermission();
+      }
+    });
   }
 
   List<Widget> _buildServiceItems() {
     return List.generate(
       serviceCenters.length,
-          (index) => ServiceCenterItem(
+      (index) => ServiceCenterItem(
         key: ValueKey('service_center_$index'),
         center: serviceCenters[index],
         onDirectionsPressed: (lat, lng) => _drawPolyline(LatLng(lat, lng)),
@@ -80,20 +85,21 @@ class ServiceCenterState extends State<ServiceCenter> {
   }
 
   Future<void> _getCurrentLocation() async {
-    final Position position = await Geolocator.getCurrentPosition();
-    if (mounted) {
-      setState(() {
+    if (_isLoadingLocation) return;
+
+    setState(() {
+      _isLoadingLocation = true;
+    });
+
+    try {
+      final Position position = await Geolocator.getCurrentPosition();
+      if (mounted) {
         _currentPosition = position;
-      });
-      _mapController.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(position.latitude, position.longitude),
-            zoom: 15,
-          ),
-        ),
-      );
-      setState(() {
+
+        _markers.removeWhere(
+          (marker) => marker.markerId.value == 'current-location',
+        );
+
         _markers.add(
           Marker(
             markerId: const MarkerId('current-location'),
@@ -104,17 +110,39 @@ class ServiceCenterState extends State<ServiceCenter> {
             infoWindow: const InfoWindow(title: 'You are here'),
           ),
         );
-      });
+
+        if (_isMapReady) {
+          _mapController.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: LatLng(position.latitude, position.longitude),
+                zoom: 15,
+              ),
+            ),
+          );
+        }
+
+        setState(() {
+          _isLoadingLocation = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingLocation = false;
+        });
+        _showNotification(
+          message: 'Unable to get current location. Please try again.',
+        );
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _sheetController.dispose();
-    _mapController.dispose();
-    _markers.clear();
-    _polylines.clear();
-    super.dispose();
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    setState(() {
+      _isMapReady = true;
+    });
   }
 
   Future<void> _drawPolyline(LatLng destination) async {
@@ -134,7 +162,7 @@ class ServiceCenterState extends State<ServiceCenter> {
 
     try {
       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: 'api key',
+        googleApiKey: 'api here',
 
         request: PolylineRequest(
           origin: PointLatLng(origin.latitude, origin.longitude),
@@ -189,7 +217,7 @@ class ServiceCenterState extends State<ServiceCenter> {
       }
     } catch (e) {
       _showNotification(
-        message: 'Error getting directions. Please try again. ${e.toString()}',
+        message: 'Error getting directions. Please try again.}',
       );
     }
   }
@@ -199,7 +227,7 @@ class ServiceCenterState extends State<ServiceCenter> {
       context: context,
       title: 'Location Permission Required',
       content:
-      'Location permission is required to show your location on the map. Please enable it in your phone settings.',
+          'Location permission is required to show your location on the map. Please enable it in your phone settings.',
       confirmText: 'Open Settings',
       cancelText: 'Cancel',
       onConfirm: () async {
@@ -221,9 +249,9 @@ class ServiceCenterState extends State<ServiceCenter> {
       SnackBar(
         content: Text(message),
         action:
-        showButton
-            ? SnackBarAction(label: 'OK', onPressed: onPressed ?? () {})
-            : null,
+            showButton
+                ? SnackBarAction(label: 'OK', onPressed: onPressed ?? () {})
+                : null,
         duration: const Duration(seconds: 3),
       ),
     );
@@ -242,14 +270,14 @@ class ServiceCenterState extends State<ServiceCenter> {
         } else {
           _showNotification(
             message:
-            'Location permissions are required to show your location on the map',
+                'Location permissions are required to show your location on the map',
           );
         }
       }
     } else {
       _showNotification(
         message:
-        'Location services are disabled. Please enable location services in your phone settings.',
+            'Location services are disabled. Please enable location services in your phone settings.',
         showButton: true,
         onPressed: () {
           Geolocator.openLocationSettings();
@@ -286,20 +314,35 @@ class ServiceCenterState extends State<ServiceCenter> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Service Centers')),
+      appBar: AppBar(
+        title: const Text('Service Centers'),
+        actions: [
+          if (_currentPosition != null)
+            IconButton(
+              icon: const Icon(Icons.my_location),
+              onPressed: _getCurrentLocation,
+            ),
+        ],
+      ),
       body: Stack(
         children: [
           GoogleMap(
+            onMapCreated: _onMapCreated,
             initialCameraPosition: _initialPosition,
             markers: _markers,
             polylines: _polylines,
-            onMapCreated: (controller) {
-              _mapController = controller;
-            },
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
+            myLocationEnabled: false,
+            myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
           ),
+          if (_isLoadingLocation)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(),
+            ),
           NotificationListener<DraggableScrollableNotification>(
             onNotification: (notification) {
               return true;

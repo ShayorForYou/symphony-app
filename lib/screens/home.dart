@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
         itemCount: 1,
         itemBuilder: (context, index) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -48,13 +48,15 @@ class HomeScreen extends StatelessWidget {
                   trendingList: trendingGames,
                   showMore: true,
                 ),
-                StatsCard(image: Assets.images.entertainment),
+                const SizedBox(height: 32),
+                StatsCard(
+                  header: 'Entertainment',
+                    image: Assets.images.entertainment),
                 PromoCard(),
                 StatsCard(
                   image: Assets.images.social,
                   title: 'JOIN SOCIAL COMMUNITY',
                 ),
-                const SizedBox(height: 16),
               ],
             ),
           );
@@ -65,38 +67,54 @@ class HomeScreen extends StatelessWidget {
 }
 
 class StatsCard extends StatelessWidget {
+  final String? header;
   final String? title;
   final String image;
 
-  const StatsCard({super.key, required this.image, this.title});
+  const StatsCard({super.key, required this.image, this.title, this.header});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      height: 180,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(image),
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.medium,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child:
-      title != null
-          ? Center(
-        child: Text(
-          title!,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (header != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              header!,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
+        Container(
+          height: 180,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(image),
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child:
+          title != null
+              ? Center(
+            child: Text(
+              title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          )
+              : null,
         ),
-      )
-          : null,
+      ],
     );
   }
 }
@@ -228,7 +246,6 @@ class ItemsSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: trendingList.length,
             cacheExtent: 300,
-            // Cache 3 items ahead
             itemBuilder: (context, index) {
               final item = trendingList[index];
               return Container(
@@ -254,7 +271,7 @@ class ItemsSection extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
                           '${item['icon']}',
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                           cacheWidth: 220,
                           filterQuality: FilterQuality.medium,
                           gaplessPlayback: true,
